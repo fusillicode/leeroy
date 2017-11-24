@@ -9,7 +9,7 @@ defmodule Leeroy.Application do
     # List all child processes to be supervised
     children = [
       # Starts a worker by calling: Leeroy.Worker.start_link(arg)
-      %{ id: Leeroy.Bot, start: { Leeroy.Bot, :start_link, [] } },
+      %{id: Leeroy.Bot, start: {Leeroy.Bot, :start_link, []}},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

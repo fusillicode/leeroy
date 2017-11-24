@@ -1,8 +1,15 @@
 defmodule Leeroy.Bot do
-  use Slack
+  @moduledoc false
 
-  def start_link() do
-    Slack.Bot.start_link(__MODULE__, [], Application.get_env(:leeroy, :slack_api_token))
+  use Slack
+  alias Slack.Bot
+
+  def start_link do
+    Bot.start_link(
+      __MODULE__,
+      [],
+      Application.get_env(:leeroy, :slack_api_token)
+    )
   end
 
   def handle_connect(slack, state) do
@@ -11,9 +18,10 @@ defmodule Leeroy.Bot do
   end
 
   def handle_event(message = %{type: "message"}, slack, state) do
-    send_message("I got a message!", message.channel, slack)
+    message |> IO.puts
     {:ok, state}
   end
+
   def handle_event(_, _, state), do: {:ok, state}
 
   def handle_info({:message, text, channel}, slack, state) do
@@ -23,5 +31,6 @@ defmodule Leeroy.Bot do
 
     {:ok, state}
   end
+
   def handle_info(_, _, state), do: {:ok, state}
 end

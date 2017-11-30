@@ -23,6 +23,7 @@ defmodule Leeroy.Mixfile do
   defp deps do
     [
       {:slack, "~> 0.12.0"},
+      {:giphy, "~> 0.1.1"},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
     ]
   end

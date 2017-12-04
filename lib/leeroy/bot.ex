@@ -47,36 +47,34 @@ defmodule Leeroy.Bot do
   end
 
   defp fetch_gif("") do
-    {:ok, response} = HTTPoison.get(
-      "api.giphy.com/v1/gifs/random",
-      [],
-      params: [
-        {"api_key", Application.get_env(:leeroy, :giphy_api_key)}
-      ]
-    )
-    case Poison.decode(response.body) do
-      {:ok, %{"data" => [%{
-        "images" => %{"fixed_height_downsampled" => %{"url" => image_url}}
-      }]}} -> image_url
-      {:ok, %{"data" => []}} -> ""
-    end
+    "api.giphy.com/v1/gifs/random"
+    |> ask_giphy
+    |> extract_gif_url
   end
 
   defp fetch_gif(search) do
-    {:ok, response} = HTTPoison.get(
-      "api.giphy.com/v1/gifs/search",
+    "api.giphy.com/v1/gifs/random"
+    |> ask_giphy([{"tag", search}])
+    |> extract_gif_url
+  end
+
+  defp ask_giphy(api_endpoint, params \\ []) do
+    {:ok, %HTTPoison.Response{body: response_body}} = HTTPoison.get(
+      api_endpoint,
       [],
       params: [
-        {"api_key", Application.get_env(:leeroy, :giphy_api_key)},
-        {"q", search},
-        {"limit", 1}
+        {"api_key", Application.get_env(:leeroy, :giphy_api_key)} | params
       ]
     )
-    case Poison.decode(response.body) do
-      {:ok, %{"data" => [%{
-        "images" => %{"fixed_height_downsampled" => %{"url" => image_url}}
-      }]}} -> image_url
-      {:ok, %{"data" => []}} -> ""
+    response_body
+  end
+
+  defp extract_gif_url(response_body) do
+    case Poison.decode(response_body) do
+      {:ok, %{"data" => %{
+        "fixed_height_downsampled_url" => image_url
+      }}} -> image_url
+      {:ok, %{"data" => _}} -> ""
     end
   end
 end

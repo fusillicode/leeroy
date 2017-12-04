@@ -15,14 +15,12 @@ defmodule Leeroy.Bot do
   def handle_event(%{
     type: "message",
     text: message_text,
-    channel: channel,
-    user: sender} = _, slack, state
+    channel: channel} = _, slack, state
   ) do
     case Regex.scan(gif_pattern(), message_text) do
       []          -> {:ok, state}
       gif_matches -> message_text
         |> giphily_message(gif_matches)
-        |> (&("<@#{sender}> said: " <> &1)).()
         |> send_message(channel, slack)
     end
     {:ok, state}

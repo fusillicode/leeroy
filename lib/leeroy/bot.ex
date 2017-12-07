@@ -12,16 +12,14 @@ defmodule Leeroy.Bot do
     )
   end
 
-  def handle_event(%{
-    type: "message",
-    text: message_text,
-    channel: channel} = _, slack, state
+  def handle_event(
+    %{type: "message", text: text, channel: channel} = _, slack, state
   ) do
-    case Regex.scan(gif_pattern(), message_text) do
-      []          -> {:ok, state}
-      gif_matches -> message_text
-        |> giphily_message(gif_matches)
-        |> send_message(channel, slack)
+    case Regex.scan(gif_pattern(), text) do
+      []      -> {:ok, state}
+      matches -> Enum.each(matches, fn(match) ->
+        match |> build_gif_message |> send_message(channel, slack)
+      end)
     end
     {:ok, state}
   end
@@ -29,21 +27,24 @@ defmodule Leeroy.Bot do
   def handle_event(_, _, state), do: {:ok, state}
   def handle_info(_, _, state), do: {:ok, state}
 
-  def gif_pattern, do: ~r/(\/g).*?(\/|$)/
+  defp gif_pattern, do: ~r/\s+(\/gif).*?(\/|$)/
 
-  def giphily_message message_text, gif_matches do
-    gif_matches
-    |> Enum.reduce(message_text, fn([gif_match | [start_pattern | [end_pattern]]], acc) ->
-      match_without_prefix = gif_match
-      |> String.replace(start_pattern, "")
-      |> String.trim
-      case end_pattern do
-        "" -> match_without_prefix
-        _  -> match_without_prefix
-          |> String.replace(end_pattern, "")
-          |> String.trim
-      end |> (&(String.replace(acc, gif_match, fetch_gif(&1)))).()
-    end)
+  defp build_gif_message([gif_match | [prefix | [suffix]]]) do
+    gif_match_without_prefix = remove_and_trim prefix, gif_match
+    suffix |> case do
+      "" -> gif_match_without_prefix
+      _  -> remove_and_trim suffix, gif_match_without_prefix
+    end |> gif_message
+  end
+
+  defp gif_message gif_tag do
+    "[#{gif_tag}] #{fetch_gif(gif_tag)}"
+  end
+
+  defp remove_and_trim(pattern, input) do
+    input
+    |> String.replace(pattern, "")
+    |> String.trim
   end
 
   defp fetch_gif("") do

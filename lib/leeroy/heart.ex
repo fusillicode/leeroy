@@ -1,4 +1,4 @@
-defmodule Leeroy.Application do
+defmodule Leeroy.Heart do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -9,7 +9,7 @@ defmodule Leeroy.Application do
     # List all child processes to be supervised
     children = [
       # Starts a worker by calling: Leeroy.Worker.start_link(arg)
-      %{id: Leeroy.Bot, start: {Leeroy.Bot, :start_link, []}},
+      %{id: Leeroy.Mind, start: {Leeroy.Mind, :start_link, []}},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

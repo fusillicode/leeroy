@@ -15,7 +15,7 @@ defmodule Leeroy.Mixfile do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Leeroy.Application, []}
+      mod: {Leeroy.Heart, []}
     ]
   end
 

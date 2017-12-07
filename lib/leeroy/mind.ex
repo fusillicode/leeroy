@@ -1,4 +1,4 @@
-defmodule Leeroy.Bot do
+defmodule Leeroy.Mind do
   @moduledoc false
 
   use Slack

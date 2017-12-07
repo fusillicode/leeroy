@@ -18,7 +18,11 @@ defmodule Leeroy.Mind do
     case Regex.scan(gif_pattern(), text) do
       []      -> {:ok, state}
       matches -> Enum.each(matches, fn(match) ->
-        match |> build_gif_message |> send_message(channel, slack)
+        match
+        |> extract_gif_tag
+        |> fetch_gif_url
+        |> build_message
+        |> send_message(channel, slack)
       end)
     end
     {:ok, state}
@@ -29,37 +33,31 @@ defmodule Leeroy.Mind do
 
   defp gif_pattern, do: ~r/\s+(\/gif).*?(\/|$)/
 
-  defp build_gif_message([gif_match | [prefix | [suffix]]]) do
-    gif_match_without_prefix = remove_and_trim prefix, gif_match
-    suffix |> case do
-      "" -> gif_match_without_prefix
-      _  -> remove_and_trim suffix, gif_match_without_prefix
-    end |> gif_message
+  defp extract_gif_tag([gif_match | [prefix | [""]]]) do
+    prefix |> remove_and_trim(gif_match)
   end
-
-  defp gif_message gif_tag do
-    "[#{gif_tag}] #{fetch_gif(gif_tag)}"
+  defp extract_gif_tag([gif_match | [prefix | [suffix]]]) do
+    [gif_match | [prefix | [""]]]
+    |> extract_gif_tag
+    |> (&(remove_and_trim(suffix, &1))).()
   end
 
   defp remove_and_trim(pattern, input) do
-    input
-    |> String.replace(pattern, "")
-    |> String.trim
+    input |> String.replace(pattern, "") |> String.trim
   end
 
-  defp fetch_gif("") do
-    "api.giphy.com/v1/gifs/random"
-    |> ask_giphy
+  defp fetch_gif_url(tag \\ "") do
+    tag
+    |> build_search_params
+    |> search_gif
     |> extract_gif_url
+    |> gif_url_and_tag(tag)
   end
 
-  defp fetch_gif(search) do
-    "api.giphy.com/v1/gifs/random"
-    |> ask_giphy([{"tag", search}])
-    |> extract_gif_url
-  end
+  defp build_search_params("") , do: []
+  defp build_search_params(tag) , do: [{"tag", tag}]
 
-  defp ask_giphy(api_endpoint, params \\ []) do
+  defp search_gif(params \\ [], api_endpoint \\ "api.giphy.com/v1/gifs/random") do
     {:ok, %HTTPoison.Response{body: response_body}} = HTTPoison.get(
       api_endpoint,
       [],
@@ -77,5 +75,13 @@ defmodule Leeroy.Mind do
       }}} -> image_url
       {:ok, %{"data" => _}} -> ""
     end
+  end
+
+  defp gif_url_and_tag(url, tag) do
+    {url, tag}
+  end
+
+  defp build_message({gif_url, gif_tag}) do
+    "[#{gif_tag}] #{gif_url}"
   end
 end
